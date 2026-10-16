@@ -1,0 +1,60 @@
+# Copie ce fichier en "config.toml" et remplis-le.
+
+[profil]
+cv = "C:/Users/blais/Downloads/CV-WANDA ALTERNANCE.pdf"   # PDF, DOCX ou TXT
+ville = "Nantes"
+rayon_km = 50
+# Niveau du diplôme préparé : 5 = BTS, 6 = Bachelor/Licence, 7 = Master
+niveau_diplome = "6"
+
+[recherche]
+mots_cles = [
+  "administrateur systèmes et réseaux",
+  "technicien systèmes et réseaux",
+  "administrateur réseau",
+  "technicien informatique",
+  "technicien support informatique",
+  "administrateur systèmes",
+]
+# Codes ROME (La Bonne Alternance) :
+# M1801 Administration SI, M1810 Production/exploitation SI, M1816 Technicien systèmes et réseaux,
+# I1401 Maintenance informatique, I1403 Technicien réseau / datacenter
+codes_rome = ["M1801", "M1810", "M1816", "I1401", "I1403"]
+score_minimum = 0       # masque les offres dont le score de matching est inférieur
+
+# --- Sources ---------------------------------------------------------------
+
+[france_travail]
+# Gratuit : crée une application sur https://francetravail.io (API "Offres d'emploi v2")
+actif = true
+client_id = ""
+client_secret = ""
+
+[la_bonne_alternance]
+# Gratuit : clé d'API sur https://api.apprentissage.beta.gouv.fr/fr/compte/profil
+# Fournit des offres ET des entreprises susceptibles de recruter (candidatures spontanées)
+actif = true
+api_key = ""
+max_entreprises_spontanees = 150
+
+[linkedin]
+# Utilise les pages publiques d'offres LinkedIn (sans connexion).
+# LinkedIn interdit le scraping automatisé dans ses CGU : à utiliser avec modération,
+# à tes risques. Mets actif = false pour le désactiver.
+actif = true
+# LinkedIn limite fortement le débit : peu de mots-clés, mais larges
+mots_cles = ["systèmes réseaux", "technicien informatique", "administrateur systèmes"]
+max_offres_par_recherche = 50
+pause_secondes = 3.0
+
+# --- Recherche des e-mails RH ------------------------------------------------
+
+[contacts]
+actif = true
+# Lit les pages publiques (contact, recrutement, mentions légales) du site de l'entreprise
+scanner_sites_web = true
+# Devine le site web des entreprises qui n'en ont pas (nom.fr, nom.com…) pour y chercher e-mails et page recrutement
+deviner_sites_web = true
+# Optionnel : https://hunter.io (25 recherches/mois en gratuit) pour trouver les e-mails RH
+hunter_api_key = ""
+max_recherches_hunter = 25

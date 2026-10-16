@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Offres d'alternance</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --card: #fff; --text: #1b1f24; --muted: #5f6b7a; --border: #dde2e8;
+    --accent: #1f6feb; --good: #1a7f37; --mid: #9a6700; --low: #cf222e; --chip: #eef2f7;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0f1216; --card: #171b21; --text: #e6e9ee; --muted: #9aa5b4; --border: #2a313b;
+            --accent: #58a6ff; --good: #3fb950; --mid: #d29922; --low: #f85149; --chip: #222934; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 15px/1.45 system-ui, "Segoe UI", sans-serif; background: var(--bg); color: var(--text); }
+  header { padding: 20px 16px 8px; max-width: 1200px; margin: auto; }
+  h1 { margin: 0 0 4px; font-size: 22px; }
+  .sub { color: var(--muted); font-size: 13px; }
+  main { max-width: 1200px; margin: auto; padding: 0 16px 40px; }
+  .stats { display: flex; gap: 10px; flex-wrap: wrap; margin: 14px 0; }
+  .stat { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; min-width: 130px; }
+  .stat b { display: block; font-size: 22px; }
+  .stat span { color: var(--muted); font-size: 12px; }
+  .tabs { display: flex; gap: 6px; margin: 10px 0; flex-wrap: wrap; }
+  .tabs button { border: 1px solid var(--border); background: var(--card); color: var(--text); border-radius: 999px;
+                 padding: 6px 14px; cursor: pointer; font: inherit; }
+  .tabs button.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .filters input, .filters select { font: inherit; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border);
+                                    background: var(--card); color: var(--text); }
+  .filters input[type=search] { flex: 1 1 220px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; }
+  .row { display: flex; gap: 14px; align-items: flex-start; }
+  .score { flex: 0 0 54px; height: 54px; border-radius: 50%; display: grid; place-items: center; font-weight: 700;
+           border: 3px solid currentColor; }
+  .s-good { color: var(--good); } .s-mid { color: var(--mid); } .s-low { color: var(--low); }
+  .info { flex: 1; min-width: 0; }
+  .title { font-weight: 600; font-size: 16px; }
+  .title a { color: inherit; text-decoration: none; } .title a:hover { text-decoration: underline; }
+  .meta { color: var(--muted); font-size: 13px; margin-top: 2px; }
+  .badge { display: inline-block; font-size: 11px; padding: 1px 8px; border-radius: 999px; background: var(--chip); margin-right: 4px; }
+  .badge.new { background: var(--accent); color: #fff; }
+  .chips { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px; }
+  .chip { font-size: 12px; padding: 2px 8px; border-radius: 6px; background: var(--chip); }
+  .chip.ok { color: var(--good); } .chip.ko { color: var(--low); }
+  .contacts { margin-top: 8px; font-size: 13px; }
+  .contacts a { color: var(--accent); }
+  details { margin-top: 6px; font-size: 13px; color: var(--muted); }
+  details p { white-space: pre-wrap; }
+  .empty { color: var(--muted); padding: 30px; text-align: center; }
+  @media (max-width: 600px) { .score { flex-basis: 44px; height: 44px; font-size: 13px; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Alternance systèmes &amp; réseaux</h1>
+  <div class="sub">Généré le {{DATE}} · <span id="cvinfo"></span></div>
+</header>
+<main>
+  <div class="stats" id="stats"></div>
+  <div class="tabs" id="tabs">
+    <button data-t="offre" class="on">Offres</button>
+    <button data-t="spontanée">Candidatures spontanées</button>
+    <button data-t="profil">Mon profil</button>
+  </div>
+  <div class="filters" id="filters">
+    <input type="search" id="q" placeholder="Rechercher (poste, entreprise, ville, compétence)…">
+    <select id="cat"><option value="">Toutes catégories</option><option>Administrateur</option><option>Technicien</option><option>Systèmes &amp; Réseaux</option></select>
+    <select id="src"><option value="">Toutes sources</option></select>
+    <select id="min"><option value="0">Score ≥ 0</option><option value="40">≥ 40</option><option value="60">≥ 60</option><option value="75">≥ 75</option></select>
+    <label class="sub"><input type="checkbox" id="mail"> avec e-mail</label>
+    <label class="sub"><input type="checkbox" id="nouv"> nouveaux</label>
+    <label class="sub"><input type="checkbox" id="site"> avec site web</label>
+  </div>
+  <div id="list"></div>
+</main>
+<script>
+const DATA = /*DATA*/[];
+const PROFIL = /*PROFIL*/{};
+let onglet = "offre";
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const lien = u => /^https?:\/\//i.test(u || "") ? esc(u) : "#";
+const cls = s => s >= 70 ? "s-good" : s >= 45 ? "s-mid" : "s-low";
+
+$("cvinfo").textContent = "CV : " + (PROFIL.fichier || "").split(/[\\/]/).pop();
+[...new Set(DATA.map(d => d.source))].sort().forEach(s => $("src").insertAdjacentHTML("beforeend", `<option>${esc(s)}</option>`));
+
+const offres = DATA.filter(d => d.candidature === "offre"), spont = DATA.filter(d => d.candidature !== "offre");
+const avecMail = DATA.filter(d => d.emails_rh.some(e => e.email.includes("@"))).length;
+$("stats").innerHTML = [
+  [offres.length, "offres d'alternance"], [offres.filter(o => o.score >= 60).length, "offres avec score ≥ 60"],
+  [spont.length, "entreprises (spontanées)"], [avecMail, "avec e-mail trouvé"], [DATA.filter(d => d.nouveau).length, "nouveautés"],
+].map(([n, l]) => `<div class="stat"><b>${n}</b><span>${l}</span></div>`).join("");
+
+function carte(d) {
+  const mails = d.emails_rh.map(e => e.email.includes("@") && !e.email.includes(" ")
+      ? `<a href="mailto:${esc(e.email)}">${esc(e.email)}</a>${e.nom ? " (" + esc(e.nom) + ")" : ""} <span class="sub">· ${esc(e.source)}</span>`
+      : `${esc(e.email)} <span class="sub">· ${esc(e.source)}</span>`).join("<br>");
+  return `<div class="card"><div class="row">
+    <div class="score ${cls(d.score)}">${d.score}</div>
+    <div class="info">
+      <div class="title"><a href="${lien(d.url)}" target="_blank" rel="noopener">${esc(d.candidature === "offre" ? d.titre : d.entreprise)}</a></div>
+      <div class="meta">
+        ${d.nouveau ? '<span class="badge new">nouveau</span>' : ""}<span class="badge">${esc(d.categorie)}</span><span class="badge">${esc(d.source)}</span>
+        ${d.candidature === "offre" ? esc(d.entreprise) + " · " : esc(d.secteur) + " · "}${esc(d.lieu)}${d.date ? " · " + esc(d.date) : ""}${d.type_contrat ? " · " + esc(d.type_contrat) : ""}
+      </div>
+      <div class="chips">${d.competences_ok.map(c => `<span class="chip ok">✓ ${esc(c)}</span>`).join("")}${d.competences_manquantes.map(c => `<span class="chip ko">✗ ${esc(c)}</span>`).join("")}</div>
+      <div class="contacts">
+        ${mails || '<span class="sub">Aucun e-mail RH trouvé.</span>'}
+        ${d.telephone ? "<br>Tél : " + esc(d.telephone) : ""}
+        <br>${d.url ? `<a href="${lien(d.url)}" target="_blank" rel="noopener">${d.candidature === "offre" ? "Voir / postuler" : "Candidater"}</a> · ` : ""}${d.lien_recherche_rh ? `<a href="${lien(d.lien_recherche_rh)}" target="_blank" rel="noopener">Recruteurs sur LinkedIn</a>` : ""}${d.site_web ? ` · <a href="${lien(d.site_web.startsWith("http") ? d.site_web : "https://" + d.site_web)}" target="_blank" rel="noopener">Site web</a>` : ""}${d.page_recrutement ? ` · <a href="${lien(d.page_recrutement)}" target="_blank" rel="noopener"><b>Page recrutement</b></a>` : ""}${d.lien_recherche_site ? ` · <a href="${lien(d.lien_recherche_site)}" target="_blank" rel="noopener">Chercher le site</a>` : ""}
+      </div>
+      ${d.description ? `<details><summary>Description</summary><p>${esc(d.description)}</p></details>` : ""}
+    </div></div></div>`;
+}
+
+function rendre() {
+  $("filters").style.display = onglet === "profil" ? "none" : "flex";
+  if (onglet === "profil") {
+    $("list").innerHTML = `<div class="card"><div class="title">Postes visés : ${esc(PROFIL.cible)}</div>
+      <p>Compétences détectées dans ton CV :</p><div class="chips">${PROFIL.competences.map(c => `<span class="chip ok">${esc(c)}</span>`).join("")}</div>
+      <p>Compétences les plus demandées par les offres et absentes de ton CV (à ajouter si tu les as, ou à travailler) :</p>
+      <div class="chips">${PROFIL.a_travailler.map(([c, n]) => `<span class="chip ko">${esc(c)} · ${n} offre(s)</span>`).join("")}</div></div>`;
+    return;
+  }
+  const q = $("q").value.toLowerCase(), cat = $("cat").value, src = $("src").value, min = +$("min").value;
+  const res = DATA.filter(d => d.candidature === onglet)
+    .filter(d => !cat || d.categorie === cat || onglet !== "offre")
+    .filter(d => !src || d.source === src)
+    .filter(d => d.score >= min)
+    .filter(d => !$("mail").checked || d.emails_rh.some(e => e.email.includes("@")))
+    .filter(d => !$("nouv").checked || d.nouveau)
+    .filter(d => !$("site").checked || d.site_web)
+    .filter(d => !q || [d.titre, d.entreprise, d.lieu, d.secteur, d.description, ...d.competences_ok].join(" ").toLowerCase().includes(q))
+    .sort((a, b) => b.score - a.score);
+  $("list").innerHTML = res.length ? res.map(carte).join("") : '<div class="empty">Aucun résultat avec ces filtres.</div>';
+}
+
+$("tabs").addEventListener("click", e => {
+  if (!e.target.dataset.t) return;
+  onglet = e.target.dataset.t;
+  [...$("tabs").children].forEach(b => b.classList.toggle("on", b === e.target));
+  rendre();
+});
+["q", "cat", "src", "min", "mail", "nouv", "site"].forEach(id => $(id).addEventListener("input", rendre));
+rendre();
+</script>
+</body>
+</html>
